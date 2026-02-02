@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekensommen 0-10</title>
+<style>
+:root{
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --ok:#16a34a;
+  --bad:#dc2626;
+  --accent:#4f46e5;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:12px;
+}
+
+.container{
+  width:100%;
+  max-width:520px;
+  background:var(--card);
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.1);
+  padding:clamp(14px, 4vw, 24px);
+  text-align:center;
+}
+
+.progress{
+  background:#e5e7eb;
+  border-radius:10px;
+  overflow:hidden;
+  height:12px;
+  margin-bottom:8px;
+}
+.bar{
+  background:var(--accent);
+  height:100%;
+  width:0%;
+  transition:width .3s;
+}
+
+#counter{
+  font-size:clamp(14px, 4vw, 16px);
+  margin-bottom:6px;
+}
+
+h1{
+  font-size:clamp(36px, 10vw, 56px);
+  margin:12px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:clamp(8px, 2.5vw, 12px);
+  margin-top:14px;
+}
+
+button{
+  font-size:clamp(18px, 6vw, 24px);
+  padding:clamp(12px, 4vw, 18px);
+  border-radius:16px;
+  border:none;
+  background:#e5e7eb;
+}
+
+button.primary{
+  background:#c7d2fe;
+}
+
+button:active{ transform:scale(.96); }
+
+.feedback{
+  min-height:64px;
+  font-size:clamp(34px, 8vw, 44px);
+  margin-top:14px;
+}
+
+.correct{ color:var(--ok); }
+.wrong{ color:var(--bad); }
+
+.flash-correct{ background:#bbf7d0 !important; }
+.flash-wrong{ background:#fecaca !important; }
+
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-top:16px;
+}
+
+@media (min-width: 900px){
+  body{ align-items:center; }
+}
+</style>
+</head>
+<body>
+
+<div class="container" id="app">
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div id="counter"></div>
+  <h1 id="question"></h1>
+  <div class="grid" id="answers"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+let current = 0;
+let attempts = 0;
+let result = 0;
+
+const TOTAL = 30;
+let stats = { first:0, second:0, third:0, none:0 };
+
+function newQuestion(){
+  attempts = 0;
+  let a,b,res,isPlus;
+  do{
+    a = Math.floor(Math.random()*11);
+    b = Math.floor(Math.random()*11);
+    isPlus = Math.random() > 0.5;
+    res = isPlus ? a+b : a-b;
+  }while(res<0 || res>10);
+
+  result = res;
+  document.getElementById('question').textContent =
+    a + (isPlus ? ' + ' : ' - ') + b + ' = ?';
+
+  document.getElementById('counter').textContent =
+    'Oefening ' + (current+1) + ' van ' + TOTAL;
+
+  document.getElementById('bar').style.width =
+    (current/TOTAL*100)+'%';
+}
+
+function answer(val){
+  attempts++;
+  const container = document.getElementById('app');
+  const feedback = document.getElementById('feedback');
+
+  if(val === result){
+    if(attempts===1) stats.first++;
+    if(attempts===2) stats.second++;
+    if(attempts===3) stats.third++;
+
+    feedback.textContent = '✅';
+    feedback.className = 'feedback correct';
+    container.classList.add('flash-correct');
+
+    setTimeout(()=>{
+      container.classList.remove('flash-correct');
+      nextQuestion();
+    },800);
+
+  } else {
+    feedback.textContent = '❌';
+    feedback.className = 'feedback wrong';
+    container.classList.add('flash-wrong');
+
+    setTimeout(()=>{
+      container.classList.remove('flash-wrong');
+      if(attempts>=3){
+        stats.none++;
+        setTimeout(nextQuestion, 1200);
+      }
+    },600);
+  }
+}
+
+function nextQuestion(){
+  current++;
+  if(current>=TOTAL){
+    showResult();
+  } else {
+    document.getElementById('feedback').textContent='';
+    newQuestion();
+  }
+}
+
+function showResult(){
+  document.getElementById('app').innerHTML = `
+    <h1>🎉 Klaar!</h1>
+    <p>🥇 Eerste keer juist: ${stats.first}</p>
+    <p>🥈 Tweede keer juist: ${stats.second}</p>
+    <p>🥉 Derde keer juist: ${stats.third}</p>
+    <p>❌ Niet juist opgelost: ${stats.none}</p>
+    <p style="margin-top:6px;">Totaal: ${TOTAL}</p>
+
+    <div class="actions">
+      <button class="primary" onclick="location.reload()">Opnieuw spelen</button>
+      <button onclick="window.location.href='index.html'">⬅️ Terug</button>
+    </div>
+  `;
+}
+
+const grid = document.getElementById('answers');
+for(let i=0;i<=10;i++){
+  const btn = document.createElement('button');
+  btn.textContent = i;
+  btn.onclick = ()=>answer(i);
+  grid.appendChild(btn);
+}
+
+newQuestion();
+</script>
+</body>
+</html>

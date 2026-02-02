@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kies een oefening</title>
+<style>
+:root{
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --accent:#4f46e5;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:16px;
+}
+
+.container{
+  width:100%;
+  max-width:600px;
+  background:var(--card);
+  border-radius:24px;
+  box-shadow:0 10px 30px rgba(0,0,0,.1);
+  padding:24px;
+  text-align:center;
+}
+
+h1{
+  font-size:clamp(28px, 6vw, 40px);
+  margin-bottom:20px;
+}
+
+.choices{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:20px;
+}
+
+.choice{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  padding:20px;
+  border-radius:20px;
+  background:#eef2ff;
+  text-decoration:none;
+  color:#111827;
+}
+
+.icon{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:clamp(48px, 10vw, 64px);
+  width:90px;
+  height:90px;
+}
+
+.label{
+  font-size:clamp(20px, 5vw, 28px);
+  font-weight:600;
+}
+
+.sub{
+  font-size:clamp(14px, 4vw, 18px);
+  color:#4b5563;
+}
+
+@media (min-width: 600px){
+  .choices{
+    grid-template-columns:1fr 1fr;
+  }
+  .choice{
+    flex-direction:column;
+    gap:12px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Wat wil je oefenen?</h1>
+
+  <div class="choices">
+    <a href="rekensommen10.html" class="choice">
+      <div class="icon">➕➖</div>
+      <div>
+        <div class="label">Rekensommen</div>
+        <div class="sub">optellen & aftrekken</div>
+      </div>
+    </a>
+
+    <a href="splitsingen10.html" class="choice">
+      <div class="icon">✂️</div>
+      <div>
+        <div class="label">Splitsen</div>
+        <div class="sub">in stukjes knippen</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+</body>
+</html>
