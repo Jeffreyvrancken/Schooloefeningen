@@ -183,13 +183,21 @@ let right = 0;
 
 const TOTAL = 20;
 let stats = { first:0, second:0, third:0, none:0 };
+let asked = new Set();
+
 
 function newQuestion(){
   attempts = 0;
 
-  total = Math.floor(Math.random()*11);
-  left = Math.floor(Math.random()*(total+1));
-  right = total - left;
+  let key;
+  do{
+    total = Math.floor(Math.random()*11);
+    left = Math.floor(Math.random()*(total+1));
+    right = total - left;
+    key = total + '-' + left;
+  }while(asked.has(key));
+
+  asked.add(key);
 
   document.getElementById('total').textContent = total;
   document.getElementById('left').textContent = left;
@@ -201,6 +209,7 @@ function newQuestion(){
   document.getElementById('bar').style.width =
     (current/TOTAL*100)+'%';
 }
+
 
 function revealCorrect(){
   document.getElementById('right').textContent = right;
@@ -246,9 +255,39 @@ function answer(val){
   }
 }
 
+
 function nextQuestion(){
   current++;
   if(current>=TOTAL){
+
+    // PERFECTE SCORE
+    if(stats.first === TOTAL){
+      document.body.innerHTML = `
+        <div class="container" style="display:flex;flex-direction:column;justify-content:space-between;min-height:70vh;">
+          <h1 style="font-size:clamp(28px,8vw,48px);margin-top:10px;">
+            Geweldig geen enkele fout!
+          </h1>
+
+          <div style="font-size:clamp(80px,25vw,180px);margin:20px 0;">
+            💰
+          </div>
+
+          <div>
+            <p style="font-size:clamp(20px,6vw,32px);margin-bottom:20px;">
+              Je hebt een centje verdiend!
+            </p>
+
+            <div class="actions">
+              <button class="primary" onclick="location.reload()">Opnieuw spelen</button>
+              <button onclick="window.location.href='index.html'">⬅️ Terug</button>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // NORMALE SAMENVATTING
     document.body.innerHTML = `
       <div class="container">
         <h1>🎉 Klaar!</h1>
@@ -269,6 +308,7 @@ function nextQuestion(){
     newQuestion();
   }
 }
+
 
 const grid = document.getElementById('answers');
 for(let i=0;i<=10;i++){
