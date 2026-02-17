@@ -229,8 +229,8 @@ function showResult(){
 
     let stars = 1;
     let msg = "Goed geoefend!";
-    if(stats.first >= TOTAL*0.7){ stars = 3; msg = "Super gedaan!"; }
-    else if(stats.first >= TOTAL*0.4){ stars = 2; msg = "Goed gedaan!"; }
+    if(stats.first >= TOTAL*0.9){ stars = 3; msg = "Super gedaan!"; }
+    else if(stats.first >= TOTAL*0.8){ stars = 2; msg = "Goed gedaan!"; }
     let starStr = "⭐".repeat(stars);
 
 document.getElementById('app').innerHTML = `
@@ -240,10 +240,16 @@ document.getElementById('app').innerHTML = `
     <div style="font-size:24px;margin-top:6px;">${msg}</div>
   </div>
 
-    <p>🥇 Eerste keer juist: ${stats.first}</p>
-    <p>🥈 Tweede keer juist: ${stats.second}</p>
-    <p>🥉 Derde keer juist: ${stats.third}</p>
-    <p>❌ Niet juist opgelost: ${stats.none}</p>
+    
+<div style="text-align:center;margin:10px 0 20px 0;">
+  <div style="font-size:clamp(32px,9vw,56px);color:#2e7d32;font-weight:bold;">
+    ⭐ Meteen juist: ${stats.first}
+  </div>
+</div>
+
+    <p>🔁 Tweede keer juist: ${stats.second}</p>
+    <p>🔁 Derde keer juist: ${stats.third}</p>
+    <p>❌ Nog oefenen: ${stats.none}</p>
     <p style="margin-top:6px;">Totaal: ${TOTAL}</p>
 
     <div class="actions">
