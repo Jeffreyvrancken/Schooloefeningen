@@ -1,0 +1,5 @@
+[[redirects]]
+from = "/beta"
+to = "https://beta--schooloefeningen.netlify.app"
+status = 200
+force = true
