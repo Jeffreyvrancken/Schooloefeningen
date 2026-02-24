@@ -104,6 +104,18 @@ button:active{ transform:scale(.96); }
 @media (min-width: 900px){
   body{ align-items:center; }
 }
+
+.operator-warning{
+  color:#dc2626;
+  display:inline-block;
+  animation:pulseOp .6s ease-in-out 3;
+}
+@keyframes pulseOp{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.4);}
+  100%{transform:scale(1);}
+}
+
 </style>
 </head>
 <body>
@@ -120,6 +132,9 @@ button:active{ transform:scale(.96); }
 let current = 0;
 let attempts = 0;
 let result = 0;
+let currentA = 0;
+let currentB = 0;
+let currentIsPlus = true;
 
 const TOTAL = 30;
 let stats = { first:0, second:0, third:0, none:0 };
@@ -140,8 +155,12 @@ function newQuestion(){
   asked.add(key);
   result = res;
 
-  document.getElementById('question').textContent =
-    a + (isPlus ? ' + ' : ' - ') + b + ' = ?';
+  currentA = a;
+  currentB = b;
+  currentIsPlus = isPlus;
+
+  document.getElementById('question').innerHTML =
+    a + ' <span id="operator">' + (isPlus ? '+' : '-') + '</span> ' + b + ' = ?';
 
   document.getElementById('counter').textContent =
     'Oefening ' + (current+1) + ' van ' + TOTAL;
@@ -171,6 +190,17 @@ function answer(val){
     },800);
 
   } else {
+
+    // Controle of het + of - teken werd verwisseld
+    let swappedResult = currentIsPlus ? (currentA - currentB) : (currentA + currentB);
+    if(val === swappedResult){
+      const op = document.getElementById('operator');
+      if(op){
+        op.classList.add('operator-warning');
+        setTimeout(()=>op.classList.remove('operator-warning'),1800);
+      }
+    }
+
     feedback.textContent = '❌';
     feedback.className = 'feedback wrong';
     container.classList.add('flash-wrong');
@@ -234,7 +264,6 @@ function showResult(){
     let starStr = "⭐".repeat(stars);
 
 document.getElementById('app').innerHTML = `
-  <h1>🎉 Klaar!</h1>
   <div style="text-align:center;margin:10px 0 18px 0;">
     <div style="font-size:48px;">${starStr}</div>
     <div style="font-size:24px;margin-top:6px;">${msg}</div>
