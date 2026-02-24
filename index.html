@@ -1,4 +1,3 @@
-<!-- beta versie -->
 
 <!DOCTYPE html>
 <html lang="nl">
@@ -21,7 +20,7 @@ body{
   background:var(--bg);
   min-height:100vh;
   display:flex;
-  justify-content:center;
+  flex-direction:column;
   align-items:center;
   padding:16px;
 }
@@ -86,11 +85,49 @@ h1{
     gap:12px;
   }
 }
+
+.toggle-wrapper{
+  display:flex;
+  justify-content:center;
+  padding-top:24px;
+  margin-top:auto;
+}
+
+.mode-btn{
+  background:#e5e7eb;
+  border:none;
+  padding:10px 22px;
+  border-radius:999px;
+  font-size:15px;
+  cursor:pointer;
+  transition:.2s;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.mode-btn:hover{
+  background:#d1d5db;
+}
+
+body.test-mode{
+  background:#e5e7eb;
+}
+
+
+.main-center{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+}
+
 </style>
 </head>
 <body>
 
-<div class="container">
+<div class="main-center"><div class="container">
   <h1>Wat wil je oefenen?</h1>
 
   <div class="choices">
@@ -110,7 +147,41 @@ h1{
       </div>
     </a>
   </div>
+</div></div>
+
+<div class="toggle-wrapper">
+  <button class="mode-btn" onclick="toggleMode()" id="modeToggle">📝 Toets</button>
 </div>
+
+<script>
+let isTestMode = false;
+
+function toggleMode(){
+
+  const body = document.body;
+  const title = document.querySelector("h1");
+  const rekLink = document.querySelectorAll(".choice")[0];
+  const splLink = document.querySelectorAll(".choice")[1];
+  const toggle = document.getElementById("modeToggle");
+
+  if(!isTestMode){
+      body.classList.add("test-mode");
+      title.textContent = "Welke toets wil je oefenen?";
+      rekLink.href = "rekensommen10_toets.html";
+      splLink.href = "splitsingen10_toets.html";
+      toggle.innerHTML = "🎯 Oefenen";
+      isTestMode = true;
+  } else {
+      body.classList.remove("test-mode");
+      title.textContent = "Wat wil je oefenen?";
+      rekLink.href = "rekensommen10.html";
+      splLink.href = "splitsingen10.html";
+      toggle.innerHTML = "📝 Toets";
+      isTestMode = false;
+  }
+}
+</script>
 
 </body>
 </html>
+

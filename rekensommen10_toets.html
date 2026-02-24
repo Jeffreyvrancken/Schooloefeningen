@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekensommen Toets</title>
+
+<style>
+:root{
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --accent:#4f46e5;
+}
+
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  font-family:system-ui,sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:16px;
+}
+
+.container{
+  width:100%;
+  max-width:520px;
+  background:var(--card);
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.1);
+  padding:24px;
+  text-align:center;
+}
+
+.progress{
+  background:#e5e7eb;
+  border-radius:10px;
+  overflow:hidden;
+  height:12px;
+  margin-bottom:8px;
+}
+
+.bar{
+  background:var(--accent);
+  height:100%;
+  width:0%;
+  transition:width .3s;
+}
+
+#counter{
+  font-size:16px;
+  margin-bottom:10px;
+}
+
+#question{
+  font-size:48px;
+  font-weight:700;
+  margin:12px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-top:14px;
+}
+
+button{
+  font-size:22px;
+  padding:16px;
+  border-radius:16px;
+  border:none;
+  background:#e5e7eb;
+}
+
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-top:20px;
+}
+
+button.primary{
+  background:#c7d2fe;
+}
+
+.wrong{color:#dc2626;font-weight:600;}
+.correct{color:#16a34a;font-weight:600;}
+</style>
+</head>
+
+<body>
+
+<div class="container" id="app">
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div id="counter"></div>
+  <div id="question"></div>
+  <div class="grid" id="answers"></div>
+</div>
+
+<script>
+const TOTAL = 10;
+let current = 0;
+let correctCount = 0;
+let result = 0;
+let mistakes = [];
+let asked = new Set();
+
+function newQuestion(){
+  let a,b,isPlus,key;
+  do{
+    a = Math.floor(Math.random()*11);
+    b = Math.floor(Math.random()*11);
+    isPlus = Math.random() > 0.5;
+    result = isPlus ? a+b : a-b;
+    key = a + "-" + (isPlus?"+":"-") + "-" + b;
+  }while(result<0 || result>10 || asked.has(key));
+
+  asked.add(key);
+
+  document.getElementById("question").textContent =
+    a + (isPlus?" + ":" - ") + b + " = ?";
+
+  document.getElementById("counter").textContent =
+    "Vraag " + (current+1) + " van " + TOTAL;
+
+  document.getElementById("bar").style.width =
+    (current/TOTAL*100) + "%";
+}
+
+function answer(val){
+  const questionText = document.getElementById("question").textContent;
+
+  if(val === result){
+    correctCount++;
+  }else{
+    mistakes.push({
+      question: questionText,
+      given: val,
+      correct: result
+    });
+  }
+
+  current++;
+
+  if(current>=TOTAL) showResult();
+  else newQuestion();
+}
+
+function showResult(){
+  let percent = Math.round((correctCount/TOTAL)*100);
+  let mistakesHtml = "";
+
+  if(mistakes.length>0){
+    mistakesHtml = "<h3>Fouten:</h3>";
+    mistakes.forEach(m=>{
+      mistakesHtml += `
+        <div>
+          ${m.question.replace(" = ?", "")} = 
+          <span class="wrong">${m.given}</span>
+          → 
+          <span class="correct">${m.correct}</span>
+        </div>`;
+    });
+  }
+
+  document.getElementById("app").innerHTML = `
+    <h1>📝 Toets afgerond</h1>
+    <h2>${correctCount} / ${TOTAL}</h2>
+    <p>${percent}%</p>
+    ${mistakesHtml}
+    <div class="actions">
+      <button class="primary" onclick="location.reload()">Opnieuw</button>
+      <button onclick="window.location.href='index.html'">⬅️ Terug</button>
+    </div>
+  `;
+}
+
+const grid = document.getElementById("answers");
+for(let i=0;i<=10;i++){
+  const btn = document.createElement("button");
+  btn.textContent = i;
+  btn.onclick = ()=>answer(i);
+  grid.appendChild(btn);
+}
+
+newQuestion();
+</script>
+
+</body>
+</html>
