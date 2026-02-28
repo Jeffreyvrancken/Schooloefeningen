@@ -207,6 +207,8 @@ function answer(val){
 
     setTimeout(()=>{
       container.classList.remove('flash-wrong');
+      feedback.innerHTML = '';
+      feedback.className = 'feedback';
       if(attempts>=3){
         stats.none++;
         setTimeout(nextQuestion, 1200);
@@ -269,13 +271,7 @@ document.getElementById('app').innerHTML = `
     <div style="font-size:24px;margin-top:6px;">${msg}</div>
   </div>
 
-    
-<div style="text-align:center;margin:10px 0 20px 0;">
-  <div style="font-size:clamp(32px,9vw,56px);color:#2e7d32;font-weight:bold;">
-    ⭐ Meteen juist: ${stats.first}
-  </div>
-</div>
-
+    <p style="font-weight:bold">⭐ Meteen juist: ${stats.first}</p>
     <p>🔁 Tweede keer juist: ${stats.second}</p>
     <p>🔁 Derde keer juist: ${stats.third}</p>
     <p>❌ Nog oefenen: ${stats.none}</p>
