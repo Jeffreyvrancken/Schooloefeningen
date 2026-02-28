@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rekensommen 0-10</title>
+<!-- v6: geen wijzigingen nodig, consistent met splitsingen v6 -->
 <style>
 :root{
   --bg:#f3f4f6;
@@ -116,9 +117,65 @@ button:active{ transform:scale(.96); }
   100%{transform:scale(1);}
 }
 
+
+/* ===== FIXED TOP TIMER ===== */
+.exercise-timer-wrapper{
+  position:fixed;
+  top:6px;
+  left:50%;
+  transform:translateX(-50%);
+  width:100%;
+  display:flex;
+  justify-content:center;
+  z-index:1000;
+}
+
+.exercise-timer{
+  width:100%;
+  max-width:520px;
+  height:10px;
+  background:#e5e7eb;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.exercise-timer-bar{
+  height:100%;
+  width:100%;
+  background:#60a5fa;
+  transition:width 0.05s linear;
+}
+
+/* push exercise down so it doesn't overlap timer */
+.container{
+  margin-top:60px !important;
+}
+
+
+/* ===== RESULT CLOSURE ANIMATION ===== */
+.result-enter{
+  opacity:0;
+  transform:translateY(10px);
+  animation:resultIn .35s ease forwards;
+}
+
+@keyframes resultIn{
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
 </style>
 </head>
 <body>
+
+<div class="exercise-timer-wrapper" id="exerciseTimerWrapper">
+  <div class="exercise-timer">
+    <div class="exercise-timer-bar" id="exerciseTimerBar"></div>
+  </div>
+</div>
+
 
 <div class="container" id="app">
   <div class="progress"><div class="bar" id="bar"></div></div>
@@ -128,6 +185,7 @@ button:active{ transform:scale(.96); }
   <div class="feedback" id="feedback"></div>
 </div>
 
+<script src="timer.js"></script>
 <script>
 let current = 0;
 let attempts = 0;
@@ -137,8 +195,27 @@ let currentB = 0;
 let currentIsPlus = true;
 
 const TOTAL = 30;
+const QUESTION_TRANSITION_MS = 300;
 let stats = { first:0, second:0, third:0, none:0 };
 let asked = new Set();
+
+
+
+function revealCorrectAnswer(){
+  const feedback = document.getElementById('feedback');
+  feedback.innerHTML = '❌<div style="font-size:22px;margin-top:6px;color:#111827;">Juiste antwoord: ' + result + '</div>';
+  feedback.className = 'feedback';
+
+  // Vul juiste antwoord in bij de oefening
+  const q = document.getElementById('question');
+  if(q){
+    q.innerHTML = currentA + ' <span id="operator">' +
+      (currentIsPlus ? '+' : '-') +
+      '</span> ' + currentB + ' = ' + result;
+  }
+}
+
+
 
 
 function newQuestion(){
@@ -165,6 +242,8 @@ function newQuestion(){
   document.getElementById('counter').textContent =
     'Oefening ' + (current+1) + ' van ' + TOTAL;
 
+  exerciseTimerStart();
+
   document.getElementById('bar').style.width =
     (current/TOTAL*100)+'%';
 }
@@ -176,9 +255,26 @@ function answer(val){
   const feedback = document.getElementById('feedback');
 
   if(val === result){
+
+    exerciseTimerStop();
+
+    if(attempts <= 3){
+      if(exerciseTimer.answeredWithinTime)
+        exerciseTimer.stats.correctWithinTime++;
+      else
+        exerciseTimer.stats.correctOutsideTime++;
+    }
     if(attempts===1) stats.first++;
     if(attempts===2) stats.second++;
     if(attempts===3) stats.third++;
+
+    // Vul juiste antwoord in bij de oefening
+    const q = document.getElementById('question');
+    if(q){
+      q.innerHTML = currentA + ' <span id="operator">' +
+        (currentIsPlus ? '+' : '-') +
+        '</span> ' + currentB + ' = ' + result;
+    }
 
     feedback.textContent = '✅';
     feedback.className = 'feedback correct';
@@ -186,8 +282,8 @@ function answer(val){
 
     setTimeout(()=>{
       container.classList.remove('flash-correct');
-      nextQuestion();
-    },800);
+      setTimeout(nextQuestion, QUESTION_TRANSITION_MS);
+    }, 800);
 
   } else {
 
@@ -210,8 +306,10 @@ function answer(val){
       feedback.innerHTML = '';
       feedback.className = 'feedback';
       if(attempts>=3){
+        exerciseTimerStop();
         stats.none++;
-        setTimeout(nextQuestion, 1200);
+        revealCorrectAnswer();
+        setTimeout(()=>{ nextQuestion(); }, 2500 + QUESTION_TRANSITION_MS);
       }
     },600);
   }
@@ -230,9 +328,13 @@ function nextQuestion(){
 
 function showResult(){
 
+  const timerWrapper = document.getElementById("exerciseTimerWrapper");
+  if(timerWrapper) timerWrapper.style.display = "none";
+
   // PERFECTE SCORE
   if(stats.first === TOTAL){
     document.getElementById('app').innerHTML = `
+<div class="result-enter">
       <div style="display:flex;flex-direction:column;justify-content:space-between;min-height:70vh;">
         <h1 style="font-size:clamp(28px,8vw,48px);margin-top:10px;">
           Geweldig geen enkele fout!
@@ -270,17 +372,21 @@ document.getElementById('app').innerHTML = `
     <div style="font-size:48px;">${starStr}</div>
     <div style="font-size:24px;margin-top:6px;">${msg}</div>
   </div>
-
+<br>
     <p style="font-weight:bold">⭐ Meteen juist: ${stats.first}</p>
     <p>🔁 Tweede keer juist: ${stats.second}</p>
     <p>🔁 Derde keer juist: ${stats.third}</p>
     <p>❌ Nog oefenen: ${stats.none}</p>
     <p style="margin-top:6px;">Totaal: ${TOTAL}</p>
+<br>
+    <p>🐆 Juist binnen tijd: ${exerciseTimer.stats.correctWithinTime}</p>
+    <p>🐢 Juist buiten tijd: ${exerciseTimer.stats.correctOutsideTime}</p>
 
     <div class="actions">
       <button class="primary" onclick="location.reload()">Opnieuw spelen</button>
       <button onclick="window.location.href='index.html'">⬅️ Terug</button>
     </div>
+</div>
   `;
 }
 
@@ -295,5 +401,5 @@ for(let i=0;i<=10;i++){
 
 newQuestion();
 </script>
-</body>
+  </body>
 </html>
