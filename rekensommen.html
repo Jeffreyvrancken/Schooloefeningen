@@ -1,0 +1,461 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekensommen 0-20</title>
+<!-- v6: geen wijzigingen nodig, consistent met splitsingen v6 -->
+<style>
+:root{
+  --bg:#f3f4f6;
+  --card:#ffffff;
+  --ok:#16a34a;
+  --bad:#dc2626;
+  --accent:#4f46e5;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:12px;
+}
+
+.container{
+  width:100%;
+  max-width:520px;
+  background:var(--card);
+  border-radius:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.1);
+  padding:clamp(14px, 4vw, 24px);
+  text-align:center;
+}
+
+.progress{
+  background:#e5e7eb;
+  border-radius:10px;
+  overflow:hidden;
+  height:12px;
+  margin-bottom:8px;
+}
+.bar{
+  background:var(--accent);
+  height:100%;
+  width:0%;
+  transition:width .3s;
+}
+
+#counter{
+  font-size:clamp(14px, 4vw, 16px);
+  margin-bottom:6px;
+}
+
+h1{
+  font-size:clamp(36px, 10vw, 56px);
+  margin:12px 0;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:clamp(8px, 2.5vw, 12px);
+  margin-top:14px;
+}
+
+button{
+  font-size:clamp(18px, 6vw, 24px);
+  padding:clamp(12px, 4vw, 18px);
+  border-radius:16px;
+  border:none;
+  background:#e5e7eb;
+}
+
+button.primary{
+  background:#c7d2fe;
+}
+
+button:active{ transform:scale(.96); }
+
+.feedback{
+  min-height:64px;
+  font-size:clamp(34px, 8vw, 44px);
+  margin-top:14px;
+}
+
+.correct{ color:var(--ok); }
+.wrong{ color:var(--bad); }
+
+.flash-correct{ background:#bbf7d0 !important; }
+.flash-wrong{ background:#fecaca !important; }
+
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  margin-top:16px;
+}
+
+@media (min-width: 900px){
+  body{ align-items:center; }
+}
+
+.operator-warning{
+  color:#dc2626;
+  display:inline-block;
+  animation:pulseOp .6s ease-in-out 3;
+}
+@keyframes pulseOp{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.4);}
+  100%{transform:scale(1);}
+}
+
+
+/* ===== FIXED TOP TIMER ===== */
+.exercise-timer-wrapper{
+  position:fixed;
+  top:6px;
+  left:50%;
+  transform:translateX(-50%);
+  width:100%;
+  display:flex;
+  justify-content:center;
+  z-index:1000;
+}
+
+.exercise-timer{
+  width:100%;
+  max-width:520px;
+  height:10px;
+  background:#e5e7eb;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.exercise-timer-bar{
+  height:100%;
+  width:100%;
+  background:#60a5fa;
+  transition:width 0.05s linear;
+}
+
+/* push exercise down so it doesn't overlap timer */
+.container{
+  margin-top:60px !important;
+}
+
+
+/* ===== RESULT CLOSURE ANIMATION ===== */
+.result-enter{
+  opacity:0;
+  transform:translateY(10px);
+  animation:resultIn .35s ease forwards;
+}
+
+@keyframes resultIn{
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div class="exercise-timer-wrapper" id="exerciseTimerWrapper">
+  <div class="exercise-timer">
+    <div class="exercise-timer-bar" id="exerciseTimerBar"></div>
+  </div>
+</div>
+
+
+<div class="container" id="app">
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div id="counter"></div>
+  <h1 id="question"></h1>
+  <div class="grid" id="answers"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<script src="timer.js"></script>
+<script>
+let current = 0;
+let attempts = 0;
+let result = 0;
+let currentA = 0;
+let currentB = 0;
+let currentIsPlus = true;
+
+const TOTAL = 30;
+const QUESTION_TRANSITION_MS = 300;
+let stats = { first:0, second:0, third:0, none:0 };
+let asked = new Set();
+
+
+
+function revealCorrectAnswer(){
+  const feedback = document.getElementById('feedback');
+  feedback.innerHTML = '❌<div style="font-size:22px;margin-top:6px;color:#111827;">Juiste antwoord: ' + result + '</div>';
+  feedback.className = 'feedback';
+
+  // Vul juiste antwoord in bij de oefening
+  const q = document.getElementById('question');
+  if(q){
+    q.innerHTML = currentA + ' <span id="operator">' +
+      (currentIsPlus ? '+' : '-') +
+      '</span> ' + currentB + ' = ' + result;
+  }
+}
+
+
+
+
+function newQuestion(){
+  attempts = 0;
+  let a,b,res,isPlus,key;
+  do{
+    a = Math.floor(Math.random()*21);
+    b = Math.floor(Math.random()*21);
+    isPlus = Math.random() > 0.5;
+    res = isPlus ? a+b : a-b;
+    key = a + '-' + (isPlus?'+':'-') + '-' + b;
+  }while(res<0 || res>20 || asked.has(key));
+
+  asked.add(key);
+  result = res;
+
+  currentA = a;
+  currentB = b;
+  currentIsPlus = isPlus;
+
+  document.getElementById('question').innerHTML =
+    a + ' <span id="operator">' + (isPlus ? '+' : '-') + '</span> ' + b + ' = <span id="inputDisplay">_</span>';
+
+  document.getElementById('counter').textContent =
+    'Oefening ' + (current+1) + ' van ' + TOTAL;
+
+  exerciseTimerStart();
+
+  document.getElementById('bar').style.width =
+    (current/TOTAL*100)+'%';
+}
+
+
+function answer(val){
+  attempts++;
+  const container = document.getElementById('app');
+  const feedback = document.getElementById('feedback');
+
+  if(val === result){
+
+    exerciseTimerStop();
+
+    if(attempts <= 3){
+      if(exerciseTimer.answeredWithinTime)
+        exerciseTimer.stats.correctWithinTime++;
+      else
+        exerciseTimer.stats.correctOutsideTime++;
+    }
+    if(attempts===1) stats.first++;
+    if(attempts===2) stats.second++;
+    if(attempts===3) stats.third++;
+
+    // Vul juiste antwoord in bij de oefening
+    const q = document.getElementById('question');
+    if(q){
+      q.innerHTML = currentA + ' <span id="operator">' +
+        (currentIsPlus ? '+' : '-') +
+        '</span> ' + currentB + ' = ' + result;
+    }
+
+    feedback.textContent = '✅';
+    feedback.className = 'feedback correct';
+    container.classList.add('flash-correct');
+
+    setTimeout(()=>{
+      container.classList.remove('flash-correct');
+      setTimeout(nextQuestion, QUESTION_TRANSITION_MS);
+    }, 800);
+
+  } else {
+
+    // Controle of het + of - teken werd verwisseld
+    let swappedResult = currentIsPlus ? (currentA - currentB) : (currentA + currentB);
+    if(val === swappedResult){
+      const op = document.getElementById('operator');
+      if(op){
+        op.classList.add('operator-warning');
+        setTimeout(()=>op.classList.remove('operator-warning'),1800);
+      }
+    }
+
+    feedback.textContent = '❌';
+    feedback.className = 'feedback wrong';
+    container.classList.add('flash-wrong');
+
+    setTimeout(()=>{
+      container.classList.remove('flash-wrong');
+      feedback.innerHTML = '';
+      feedback.className = 'feedback';
+      if(attempts>=3){
+        exerciseTimerStop();
+        stats.none++;
+        revealCorrectAnswer();
+        setTimeout(()=>{ nextQuestion(); }, 2500 + QUESTION_TRANSITION_MS);
+      }
+    },600);
+  }
+}
+
+function nextQuestion(){
+  current++;
+  if(current>=TOTAL){
+    showResult();
+  } else {
+    document.getElementById('feedback').textContent='';
+    newQuestion();
+    updateDisplay();
+  }
+}
+
+
+function showResult(){
+
+  const timerWrapper = document.getElementById("exerciseTimerWrapper");
+  if(timerWrapper) timerWrapper.style.display = "none";
+
+  // PERFECTE SCORE
+  if(stats.first === TOTAL){
+    document.getElementById('app').innerHTML = `
+<div class="result-enter">
+      <div style="display:flex;flex-direction:column;justify-content:space-between;min-height:70vh;">
+        <h1 style="font-size:clamp(28px,8vw,48px);margin-top:10px;">
+          Geweldig geen enkele fout!
+        </h1>
+
+        <div style="font-size:clamp(80px,25vw,180px);margin:20px 0;">
+          💰
+        </div>
+
+        <div>
+          <p style="font-size:clamp(20px,6vw,32px);margin-bottom:20px;">
+            Je hebt een euro verdiend!
+          </p>
+
+          <div class="actions">
+            <button class="primary" onclick="location.reload()">Opnieuw spelen</button>
+            <button onclick="window.location.href='index.html'">⬅️ Terug</button>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  
+
+    let stars = 1;
+    let msg = "Goed geoefend!";
+    if(stats.first >= TOTAL*0.9){ stars = 3; msg = "Super gedaan!"; }
+    else if(stats.first >= TOTAL*0.8){ stars = 2; msg = "Goed gedaan!"; }
+    let starStr = "⭐".repeat(stars);
+
+document.getElementById('app').innerHTML = `
+  <div style="text-align:center;margin:10px 0 18px 0;">
+    <div style="font-size:48px;">${starStr}</div>
+    <div style="font-size:24px;margin-top:6px;">${msg}</div>
+  </div>
+<br>
+    <p style="font-weight:bold">⭐ Meteen juist: ${stats.first}</p>
+    <p>🔁 Tweede keer juist: ${stats.second}</p>
+    <p>🔁 Derde keer juist: ${stats.third}</p>
+    <p>❌ Nog oefenen: ${stats.none}</p>
+    <p style="margin-top:6px;">Totaal: ${TOTAL}</p>
+<br>
+    <p>🐆 Juist binnen tijd: ${exerciseTimer.stats.correctWithinTime}</p>
+    <p>🐢 Juist buiten tijd: ${exerciseTimer.stats.correctOutsideTime}</p>
+
+    <div class="actions">
+      <button class="primary" onclick="location.reload()">Opnieuw spelen</button>
+      <button onclick="window.location.href='index.html'">⬅️ Terug</button>
+    </div>
+</div>
+  `;
+}
+
+
+
+const grid = document.getElementById('answers');
+
+let inputBuffer = "";
+
+function updateDisplay(){
+  const el = document.getElementById('inputDisplay');
+  if(el){
+    el.textContent = inputBuffer || "_";
+  }
+}
+
+function addDigit(d){
+  if(inputBuffer === "0"){
+    inputBuffer = d;
+  } else if(inputBuffer.length < 2){
+    inputBuffer += d;
+  }
+  updateDisplay();
+}
+
+function backspace(){
+  inputBuffer = "";
+  updateDisplay();
+}
+
+function submitAnswer(){
+  if(inputBuffer === "") return;
+  const val = parseInt(inputBuffer);
+  inputBuffer = "";
+  updateDisplay();
+  answer(val);
+}
+
+// Build numpad
+const layout = [
+  ['7','8','9'],
+  ['4','5','6'],
+  ['1','2','3'],
+  ['⌫','0','✔']
+];
+
+layout.flat().forEach(key=>{
+  const btn = document.createElement('button');
+
+  if(key === '⌫'){
+    btn.textContent = '⌫';
+    btn.style.background = '#fecaca';
+    btn.onclick = backspace;
+  } else if(key === '✔'){
+    btn.textContent = '✔';
+    btn.style.background = '#bbf7d0';
+    btn.onclick = submitAnswer;
+  } else {
+    btn.textContent = key;
+    btn.onclick = ()=>addDigit(key);
+  }
+
+  grid.appendChild(btn);
+});
+
+newQuestion();
+updateDisplay();
+
+</script>
+  </body>
+</html>

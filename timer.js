@@ -44,7 +44,3 @@ function exerciseTimerStop(){
   clearInterval(exerciseTimer.interval);
 }
 
-function exerciseTimerHide(){
-  const wrapper = document.getElementById("exerciseTimerWrapper");
-  if(wrapper) wrapper.style.display = "none";
-}

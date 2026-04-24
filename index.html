@@ -131,7 +131,7 @@ body.test-mode{
   <h1>Wat wil je oefenen?</h1>
 
   <div class="choices">
-    <a href="rekensommen10.html" class="choice">
+    <a href="rekensommen.html" class="choice">
       <div class="icon">➕➖</div>
       <div>
         <div class="label">Rekensommen</div>
@@ -139,7 +139,7 @@ body.test-mode{
       </div>
     </a>
 
-    <a href="splitsingen10.html" class="choice">
+    <a href="splitsingen.html" class="choice">
       <div class="icon">✂️</div>
       <div>
         <div class="label">Splitsen</div>
@@ -167,15 +167,15 @@ function toggleMode(){
   if(!isTestMode){
       body.classList.add("test-mode");
       title.textContent = "Welke toets wil je oefenen?";
-      rekLink.href = "rekensommen10_toets.html";
-      splLink.href = "splitsingen10_toets.html";
+      rekLink.href = "rekensommen_toets.html";
+      splLink.href = "splitsingen_toets.html";
       toggle.innerHTML = "🎯 Oefenen";
       isTestMode = true;
   } else {
       body.classList.remove("test-mode");
       title.textContent = "Wat wil je oefenen?";
-      rekLink.href = "rekensommen10.html";
-      splLink.href = "splitsingen10.html";
+      rekLink.href = "rekensommen.html";
+      splLink.href = "splitsingen.html";
       toggle.innerHTML = "📝 Toets";
       isTestMode = false;
   }
